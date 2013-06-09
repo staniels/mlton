@@ -8,7 +8,7 @@
 
 local
    ../../lib/mlton/sources.mlb
-   ../ast/sources.mlb
+   ../new_atoms/sources.mlb
    ../control/sources.mlb
 
    id.sig
@@ -56,7 +56,6 @@ local
    hash-type.sig
    hash-type.fun
 in
-   signature AST
    signature ATOMS
    signature ID
    signature C_FUNCTION
@@ -74,6 +73,9 @@ in
    signature TYPE_OPS
    signature WORD_X
    signature WORD_X_VECTOR
+
+   signature REAL_SIZE
+   signature WORD_SIZE
 
    functor Atoms
    functor Id

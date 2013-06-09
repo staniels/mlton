@@ -7,7 +7,6 @@
  *)
 
 local
-   ../ast/sources.mlb
    ../atoms/sources.mlb
    ../control/sources.mlb
    ../../lib/mlton/sources.mlb
