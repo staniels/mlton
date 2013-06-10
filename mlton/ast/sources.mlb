@@ -7,7 +7,7 @@
  *)
 
 local
-   ../new_atoms/sources.mlb
+   ../atoms/sources.mlb
    ../../lib/mlton/sources.mlb
    ../control/sources.mlb
 
@@ -31,13 +31,6 @@ local
    ast.fun
 in
    signature AST
-   signature ADMITS_EQUALITY
-   signature BINDING_STRENGTH
-   signature TYCON_KIND
 
    functor Ast
-   functor Field
-   functor Record
-   functor Symbol
-   functor Tyvar
 end
