@@ -886,37 +886,26 @@ fun output {program as Machine.Program.T {chunks,
                 Layout.record [("block", Label.layout (Block.label block)),
                                ("layedOut", Bool.layout (!layedOut))],
                 Unit.layout)
-            fun maybePrintLabel l =
-               if ! (#layedOut (labelInfo l))
-                  then ()
-               else gotoLabel l
-            and gotoLabel arg =
-               traceGotoLabel
-               (fn l =>
-                let
-                   val info as {layedOut, ...} = labelInfo l
-                in
-                   if !layedOut
-                      then print (concat ["\tgoto ", Label.toString l, ";\n"])
-                   else printLabelCode info
-                end) arg
+            fun gotoLabel' l =
+               print (concat ["\tgoto ", Label.toString l, ";\n"])
+            fun gotoLabelOrAppend l =
+               let
+                  val info as {status, ...} = labelInfo label
+               in
+                   case !status of
+                      Many =>
+                         gotoLabel' l
+                    | One =>
+                         printLabelCode info
+                    | None => ()
+               end
             and printLabelCode arg =
                tracePrintLabelCode
                (fn {block = Block.T {kind, label = l, live, statements,
                                      transfer, ...},
-                    layedOut, status, ...} =>
+                    layedOut, ...} =>
                 let
                   val _ = layedOut := true
-                  val _ =
-                     case !status of
-                        Many =>
-                           let
-                              val s = Label.toString l
-                           in
-                              print s
-                              ; print ":\n"
-                           end
-                      | _ => ()
                   fun pop (fi: FrameInfo.t) =
                      (C.push (Bytes.~ (Program.frameSize (program, fi)), print)
                       ; if amTimeProfiling
@@ -963,11 +952,6 @@ fun output {program as Machine.Program.T {chunks,
                end) arg
             and outputTransfer (t, source: Label.t) =
                let
-                  fun iff (test, a, b) =
-                     (force a
-                      ; C.call ("\tBNZ", [test, Label.toString a], print)
-                      ; gotoLabel b
-                      ; maybePrintLabel a)
                   datatype z = datatype Transfer.t
                in
                   case t of
@@ -1010,8 +994,8 @@ fun output {program as Machine.Program.T {chunks,
                                      :: (Vector.toListMap (args, operandToString)
                                          @ [Label.toString overflow]),
                                      print)
-                           ; gotoLabel success
-                           ; maybePrintLabel overflow
+                           ; gotoLabelOrAppend success
+                           (*; ###maybePrintLabel### overflow*)
                         end
                    | CCall {args, frameInfo, func, return} =>
                         let
@@ -1077,7 +1061,7 @@ fun output {program as Machine.Program.T {chunks,
                            val _ =
                               if maySwitchThreads
                                  then print "\tReturn();\n"
-                              else Option.app (return, gotoLabel)
+                              else Option.app (return, gotoLabelOrAppend)
                         in
                            ()
                         end
@@ -1091,20 +1075,23 @@ fun output {program as Machine.Program.T {chunks,
                                     push (return, size)
                         in
                            if ChunkLabel.equals (labelChunk source, dstChunk)
-                              then gotoLabel label
+                              then gotoLabelOrAppend label
                            else
                               C.call ("\tFarJump",
                                       [chunkLabelToString dstChunk,
                                        labelToStringIndex label],
                                       print)
                         end
-                   | Goto dst => gotoLabel dst
+                   | Goto dst => gotoLabelOrAppend dst
                    | Raise => C.call ("\tRaise", [], print)
                    | Return => C.call ("\tReturn", [], print)
                    | Switch switch =>
                         let
                            fun bool (test: Operand.t, t, f) =
-                              iff (operandToString test, t, f)
+                              (force t
+                              ; C.call ("\tBNZ", [operandToString test, Label.toString t], print)
+                              ; gotoLabelOrAppend f
+                              (*; ###maybePrintLabel### t*))
                            fun doit {cases: (string * Label.t) vector,
                                      default: Label.t option,
                                      test: Operand.t}: unit =
@@ -1119,17 +1106,17 @@ fun output {program as Machine.Program.T {chunks,
                                         (cases, fn (n, l) => (print "case "
                                                               ; print n
                                                               ; print ":\n"
-                                                              ; gotoLabel l)))
+                                                              ; gotoLabelOrAppend l)))
                                      ; print "default:\n"
-                                     ; gotoLabel default
+                                     ; gotoLabelOrAppend default
                                      ; print "}\n")
                               in
                                  case (Vector.length cases, default) of
                                     (0, NONE) =>
                                        Error.bug "CCodegen.outputTransfers: Switch"
-                                  | (0, SOME l) => gotoLabel l
+                                  | (0, SOME l) => gotoLabelOrAppend l
                                   | (1, NONE) =>
-                                       gotoLabel (#2 (Vector.sub (cases, 0)))
+                                       gotoLabelOrAppend (#2 (Vector.sub (cases, 0)))
                                   | (_, NONE) =>
                                        switch (Vector.dropPrefix (cases, 1),
                                                #2 (Vector.sub (cases, 0)))
@@ -1197,9 +1184,20 @@ fun output {program as Machine.Program.T {chunks,
                                  then (print "case "
                                        ; print (labelToStringIndex label)
                                        ; print ":\n"
-                                       ; gotoLabel label)
+                                       ; gotoLabel' label)
                               else ())
             ; print "EndChunk\n"
+            ; Vector.foreach (blocks, fn Block.T {label, ...} =>
+                              let
+                                 val info as {layedOut, ...} = labelInfo label
+                              in
+                                 if !layedOut
+                                    then ()
+                                 else
+                                    ( print (Label.toString label)
+                                    ; print ":\n"
+                                    ; printLabelCode info)
+                              end)
             ; done ()
          end
       val additionalMainArgs =
