@@ -37,7 +37,7 @@ static void MLton_callFromC () {                                        \
         cont.nextChunk = nextChunks[nextFun];                           \
         returnToC = FALSE;                                              \
         do {                                                            \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);  \
         } while (not returnToC);                                        \
         returnToC = FALSE;                                              \
         s->atomicState += 1;                                            \
@@ -65,14 +65,14 @@ PUBLIC int MLton_main (int argc, char* argv[]) {                        \
         }                                                               \
         /* Trampoline */                                                \
         while (1) {                                                     \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);  \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
         }                                                               \
         return 1;                                                       \
 }
@@ -93,7 +93,7 @@ PUBLIC void LIB_OPEN(LIBNAME) (int argc, char* argv[]) {                \
         /* Trampoline */                                                \
         returnToC = FALSE;                                              \
         do {                                                            \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
         } while (not returnToC);                                        \
 }                                                                       \
 PUBLIC void LIB_CLOSE(LIBNAME) () {                                     \
@@ -102,7 +102,7 @@ PUBLIC void LIB_CLOSE(LIBNAME) () {                                     \
         cont.nextChunk = nextChunks[nextFun];                           \
         returnToC = FALSE;                                              \
         do {                                                            \
-                cont=(*(struct cont(*)(void))cont.nextChunk)();         \
+                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
         } while (not returnToC);                                        \
         GC_done(&gcState);                                              \
 }

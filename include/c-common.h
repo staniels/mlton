@@ -26,7 +26,7 @@ PRIVATE extern struct cont (*nextChunks []) (void);
 #define ChunkName(n) Chunk ## n
 
 #define DeclareChunk(n)                         \
-        PRIVATE struct cont ChunkName(n)(void)
+        PRIVATE struct cont ChunkName(n)(uintptr_t nextF)
 
 #define Chunkp(n) &(ChunkName(n))
 

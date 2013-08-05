@@ -97,14 +97,14 @@
         DeclareChunk(n) {                                       \
                 struct cont cont;                               \
                 register unsigned int frontier asm("g5");       \
-                uintptr_t l_nextFun = nextFun;                  \
+                uintptr_t l_nextFun = nextF;                  \
                 register unsigned int stackTop asm("g6");
 #else
 #define Chunk(n)                                \
         DeclareChunk(n) {                       \
                 struct cont cont;               \
                 Pointer frontier;               \
-                uintptr_t l_nextFun = nextFun;  \
+                uintptr_t l_nextFun = nextF;  \
                 Pointer stackTop;
 #endif
 
@@ -116,7 +116,7 @@
                 CacheStackTop();                                        \
                 while (1) {                                             \
                 top:                                                    \
-                switch (l_nextFun) {
+                switch (l_nextF) {
 
 #define EndChunkSwitch                                                  \
                 default:                                                \
