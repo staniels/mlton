@@ -118,7 +118,7 @@
                 top:                                                    \
                 switch (l_nextFun) {
 
-#define EndChunk                                                        \
+#define EndChunkSwitch                                                  \
                 default:                                                \
                         /* interchunk return */                         \
                         nextFun = l_nextFun;                            \
@@ -128,8 +128,7 @@
                                 FlushStackTop();                        \
                                 return cont;                            \
                 } /* end switch (l_nextFun) */                          \
-                } /* end while (1) */                                   \
-        } /* end chunk */
+                } /* end while (1) */
 
 /* ------------------------------------------------- */
 /*                Calling SML from C                 */
