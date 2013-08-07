@@ -562,8 +562,7 @@ fun output {program as Machine.Program.T {chunks,
    let
       val {get = labelInfo: Label.t -> {block: Block.t,
                                         chunkLabel: ChunkLabel.t,
-                                        frameIndex: int option,
-                                        layedOut: bool ref},
+                                        frameIndex: int option},
            set = setLabelInfo, ...} =
          Property.getSetOnce
          (Label.plist, Property.initRaise ("CCodeGen.info", Label.layout))
@@ -589,8 +588,7 @@ fun output {program as Machine.Program.T {chunks,
            in
               setLabelInfo (label, {block = b,
                                     chunkLabel = chunkLabel,
-                                    frameIndex = frameIndex,
-                                    layedOut = ref false})
+                                    frameIndex = frameIndex})
            end))
       val a = Array.fromList (!entryLabels)
       val () = QuickSort.sortArray (a, fn ((_, i), (_, i')) => i <= i')
@@ -846,64 +844,12 @@ fun output {program as Machine.Program.T {chunks,
             val tracePrintLabelCode =
                Trace.trace
                ("CCodegen.printLabelCode",
-                fn {block, layedOut, ...} =>
-                Layout.record [("block", Label.layout (Block.label block)),
-                               ("layedOut", Bool.layout (!layedOut))],
+                fn {block, ...} =>
+                Layout.record [("block", Label.layout (Block.label block))],
                 Unit.layout)
             fun gotoLabel l =
                print (concat ["\tgoto ", Label.toString l, ";\n"])
-            and printLabelCode arg =
-               tracePrintLabelCode
-               (fn {block = Block.T {kind, label = l, live, statements,
-                                     transfer, ...},
-                    layedOut, ...} =>
-                let
-                  val _ = layedOut := true
-                  fun pop (fi: FrameInfo.t) =
-                     (C.push (Bytes.~ (Program.frameSize (program, fi)), print)
-                      ; if amTimeProfiling
-                           then print "\tFlushStackTop();\n"
-                        else ())
-                  val _ =
-                     case kind of
-                        Kind.Cont {frameInfo, ...} => pop frameInfo
-                      | Kind.CReturn {dst, frameInfo, ...} =>
-                           (case frameInfo of
-                               NONE => ()
-                             | SOME fi => pop fi
-                            ; (Option.app
-                               (dst, fn x =>
-                                let
-                                   val x = Live.toOperand x
-                                   val ty = Operand.ty x
-                                in
-                                   print
-                                   (concat
-                                    ["\t",
-                                     move {dst = operandToString x,
-                                           dstIsMem = Operand.isMem x,
-                                           src = creturn ty,
-                                           srcIsMem = false,
-                                           ty = ty}])
-                                end)))
-                      | Kind.Func => ()
-                      | Kind.Handler {frameInfo, ...} => pop frameInfo
-                      | Kind.Jump => ()
-                  val _ =
-                     if 0 = !Control.Native.commented
-                        then ()
-                     else print (let open Layout
-                                 in toString
-                                    (seq [str "\t/* live: ",
-                                          Vector.layout Live.layout live,
-                                          str " */\n"])
-                                 end)
-                  val _ = Vector.foreach (statements, fn s =>
-                                          outputStatement (s, print))
-                  val _ = outputTransfer (transfer, l)
-               in ()
-               end) arg
-            and outputTransfer (t, source: Label.t) =
+            fun outputTransfer (t, source: Label.t) =
                let
                   datatype z = datatype Transfer.t
                in
@@ -1096,6 +1042,55 @@ fun output {program as Machine.Program.T {chunks,
                            else normal ()
                         end
                end
+            fun printLabelCode arg =
+               tracePrintLabelCode
+               (fn {block = Block.T {kind, label = l, live, statements,
+                                     transfer, ...}, ...} =>
+                let
+                  fun pop (fi: FrameInfo.t) =
+                     (C.push (Bytes.~ (Program.frameSize (program, fi)), print)
+                      ; if amTimeProfiling
+                           then print "\tFlushStackTop();\n"
+                        else ())
+                  val _ =
+                     case kind of
+                        Kind.Cont {frameInfo, ...} => pop frameInfo
+                      | Kind.CReturn {dst, frameInfo, ...} =>
+                           (case frameInfo of
+                               NONE => ()
+                             | SOME fi => pop fi
+                            ; (Option.app
+                               (dst, fn x =>
+                                let
+                                   val x = Live.toOperand x
+                                   val ty = Operand.ty x
+                                in
+                                   print
+                                   (concat
+                                    ["\t",
+                                     move {dst = operandToString x,
+                                           dstIsMem = Operand.isMem x,
+                                           src = creturn ty,
+                                           srcIsMem = false,
+                                           ty = ty}])
+                                end)))
+                      | Kind.Func => ()
+                      | Kind.Handler {frameInfo, ...} => pop frameInfo
+                      | Kind.Jump => ()
+                  val _ =
+                     if 0 = !Control.Native.commented
+                        then ()
+                     else print (let open Layout
+                                 in toString
+                                    (seq [str "\t/* live: ",
+                                          Vector.layout Live.layout live,
+                                          str " */\n"])
+                                 end)
+                  val _ = Vector.foreach (statements, fn s =>
+                                          outputStatement (s, print))
+                  val _ = outputTransfer (transfer, l)
+               in ()
+               end) arg
             fun declareRegisters () =
                List.foreach
                (CType.all, fn t =>
@@ -1137,16 +1132,9 @@ fun output {program as Machine.Program.T {chunks,
                               else ())
             ; print "EndChunkSwitch\n"
             ; Vector.foreach (blocks, fn Block.T {label, ...} =>
-                              let
-                                 val info as {layedOut, ...} = labelInfo label
-                              in
-                                 if !layedOut
-                                    then ()
-                                 else
-                                    ( print (Label.toString label)
-                                    ; print ":\n"
-                                    ; printLabelCode info)
-                              end)
+                                 ( print (Label.toString label)
+                                 ; print ":\n"
+                                 ; printLabelCode (labelInfo label)))
             ; print "} /* end chunk */"
             ; done ()
          end
