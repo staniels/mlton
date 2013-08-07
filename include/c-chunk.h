@@ -119,7 +119,7 @@
                 default:                                                \
                         /* interchunk return */                         \
                         cont.nextBlock = nextBlock;                     \
-                        cont.nextChunk = (void*)nextChunks[(int)nextBlock];    \
+                        cont.nextChunk = (void*)nextChunks[nextBlock];    \
                         leaveChunk:                                     \
                                 FlushFrontier();                        \
                                 FlushStackTop();                        \

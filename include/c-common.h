@@ -17,7 +17,7 @@
 
 struct cont {
         void *nextChunk;
-        void *nextBlock;
+        uintptr_t nextBlock;
 };
 
 PRIVATE extern int returnToC;

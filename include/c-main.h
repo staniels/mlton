@@ -33,7 +33,7 @@ static void MLton_callFromC () {                                        \
         /* Switch to the C Handler thread. */                           \
         GC_switchToThread (s, GC_getCallFromCHandlerThread (s), 0);     \
         cont.nextBlock = *(uintptr_t*)(s->stackTop - GC_RETURNADDRESS_SIZE);   \
-        cont.nextChunk = nextChunks[(int)cont.nextBlock];                    \
+        cont.nextChunk = nextChunks[cont.nextBlock];                    \
         returnToC = FALSE;                                              \
         do {                                                            \
                 cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
@@ -60,7 +60,7 @@ PUBLIC int MLton_main (int argc, char* argv[]) {                        \
         } else {                                                        \
                 /* Return to the saved world */                         \
                 cont.nextBlock = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
-                cont.nextChunk = nextChunks[(int)cont.nextBlock];                   \
+                cont.nextChunk = nextChunks[cont.nextBlock];                   \
         }                                                               \
         /* Trampoline */                                                \
         while (1) {                                                     \
@@ -87,7 +87,7 @@ PUBLIC void LIB_OPEN(LIBNAME) (int argc, char* argv[]) {                \
         } else {                                                        \
                 /* Return to the saved world */                         \
                 cont.nextBlock = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
-                cont.nextChunk = nextChunks[(int)cont.nextBlock];                   \
+                cont.nextChunk = nextChunks[cont.nextBlock];                   \
         }                                                               \
         /* Trampoline */                                                \
         returnToC = FALSE;                                              \
@@ -98,7 +98,7 @@ PUBLIC void LIB_OPEN(LIBNAME) (int argc, char* argv[]) {                \
 PUBLIC void LIB_CLOSE(LIBNAME) () {                                     \
         struct cont cont;                                               \
         cont.nextBlock = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
-        cont.nextChunk = nextChunks[(int)cont.nextBlock];                           \
+        cont.nextChunk = nextChunks[cont.nextBlock];                           \
         returnToC = FALSE;                                              \
         do {                                                            \
                 cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);         \
