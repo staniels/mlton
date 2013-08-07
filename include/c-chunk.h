@@ -97,38 +97,34 @@
         DeclareChunk(n) {                                       \
                 struct cont cont;                               \
                 register unsigned int frontier asm("g5");       \
-                uintptr_t l_nextFun = nextF;                  \
                 register unsigned int stackTop asm("g6");
 #else
 #define Chunk(n)                                \
         DeclareChunk(n) {                       \
                 struct cont cont;               \
                 Pointer frontier;               \
-                uintptr_t l_nextFun = nextF;  \
                 Pointer stackTop;
 #endif
 
 #define ChunkSwitch(n)                                                  \
                 if (DEBUG_CCODEGEN)                                     \
-                        fprintf (stderr, "%s:%d: entering chunk %d  l_nextFun = %d\n", \
-                                        __FILE__, __LINE__, n, (int)l_nextFun); \
+                        fprintf (stderr, "%s:%d: entering chunk %d  nextBlock = %d\n", \
+                                        __FILE__, __LINE__, n, (int)nextBlock); \
                 CacheFrontier();                                        \
                 CacheStackTop();                                        \
-                while (1) {                                             \
                 top:                                                    \
-                switch (l_nextF) {
+                switch (nextBlock) {
 
 #define EndChunkSwitch                                                  \
                 default:                                                \
                         /* interchunk return */                         \
-                        nextFun = l_nextFun;                            \
-                        cont.nextChunk = (void*)nextChunks[nextFun];    \
+                        cont.nextBlock = nextBlock;                     \
+                        cont.nextChunk = (void*)nextChunks[(int)nextBlock];    \
                         leaveChunk:                                     \
                                 FlushFrontier();                        \
                                 FlushStackTop();                        \
                                 return cont;                            \
-                } /* end switch (l_nextFun) */                          \
-                } /* end while (1) */
+                } /* end switch (nextBlock) */
 
 /* ------------------------------------------------- */
 /*                Calling SML from C                 */
@@ -167,10 +163,10 @@
 
 #define Return()                                                                \
         do {                                                                    \
-                l_nextFun = *(uintptr_t*)(StackTop - sizeof(void*));            \
+                nextBlock = *(uintptr_t*)(StackTop - sizeof(void*));            \
                 if (DEBUG_CCODEGEN)                                             \
-                        fprintf (stderr, "%s:%d: Return()  l_nextFun = %d\n",   \
-                                        __FILE__, __LINE__, (int)l_nextFun);    \
+                        fprintf (stderr, "%s:%d: Return()  nextBlock = %d\n",   \
+                                        __FILE__, __LINE__, (int)nextBlock);    \
                 goto top;                                                       \
         } while (0)
 

@@ -17,23 +17,23 @@
 
 struct cont {
         void *nextChunk;
+        void *nextBlock;
 };
 
-PRIVATE extern uintptr_t nextFun;
 PRIVATE extern int returnToC;
 PRIVATE extern struct cont (*nextChunks []) (void);
 
 #define ChunkName(n) Chunk ## n
 
 #define DeclareChunk(n)                         \
-        PRIVATE struct cont ChunkName(n)(uintptr_t nextF)
+        PRIVATE struct cont ChunkName(n)(uintptr_t nextBlock)
 
 #define Chunkp(n) &(ChunkName(n))
 
 #define PrepFarJump(n, l)                               \
         do {                                            \
                 cont.nextChunk = (void*)ChunkName(n);   \
-                nextFun = l;                            \
+                cont.nextBlock = l;                     \
         } while (0)
 
 #endif /* #ifndef _C_COMMON_H_ */

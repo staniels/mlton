@@ -18,7 +18,6 @@ static GC_frameIndex returnAddressToFrameIndex (GC_returnAddress ra) {
 
 #define MLtonCallFromC                                                  \
 /* Globals */                                                           \
-PRIVATE uintptr_t nextFun;                                              \
 PRIVATE int returnToC;                                                  \
 static void MLton_callFromC () {                                        \
         struct cont cont;                                               \
@@ -33,11 +32,11 @@ static void MLton_callFromC () {                                        \
                 s->limit = s->limitPlusSlop - GC_HEAP_LIMIT_SLOP;       \
         /* Switch to the C Handler thread. */                           \
         GC_switchToThread (s, GC_getCallFromCHandlerThread (s), 0);     \
-        nextFun = *(uintptr_t*)(s->stackTop - GC_RETURNADDRESS_SIZE);   \
-        cont.nextChunk = nextChunks[nextFun];                           \
+        cont.nextBlock = *(uintptr_t*)(s->stackTop - GC_RETURNADDRESS_SIZE);   \
+        cont.nextChunk = nextChunks[(int)cont.nextBlock];                    \
         returnToC = FALSE;                                              \
         do {                                                            \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
         } while (not returnToC);                                        \
         returnToC = FALSE;                                              \
         s->atomicState += 1;                                            \
@@ -60,19 +59,19 @@ PUBLIC int MLton_main (int argc, char* argv[]) {                        \
                 PrepFarJump(mc, ml);                                    \
         } else {                                                        \
                 /* Return to the saved world */                         \
-                nextFun = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
-                cont.nextChunk = nextChunks[nextFun];                   \
+                cont.nextBlock = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
+                cont.nextChunk = nextChunks[(int)cont.nextBlock];                   \
         }                                                               \
         /* Trampoline */                                                \
         while (1) {                                                     \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);  \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);  \
         }                                                               \
         return 1;                                                       \
 }
@@ -87,22 +86,22 @@ PUBLIC void LIB_OPEN(LIBNAME) (int argc, char* argv[]) {                \
                 PrepFarJump(mc, ml);                                    \
         } else {                                                        \
                 /* Return to the saved world */                         \
-                nextFun = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
-                cont.nextChunk = nextChunks[nextFun];                   \
+                cont.nextBlock = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
+                cont.nextChunk = nextChunks[(int)cont.nextBlock];                   \
         }                                                               \
         /* Trampoline */                                                \
         returnToC = FALSE;                                              \
         do {                                                            \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);         \
         } while (not returnToC);                                        \
 }                                                                       \
 PUBLIC void LIB_CLOSE(LIBNAME) () {                                     \
         struct cont cont;                                               \
-        nextFun = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
-        cont.nextChunk = nextChunks[nextFun];                           \
+        cont.nextBlock = *(uintptr_t*)(gcState.stackTop - GC_RETURNADDRESS_SIZE); \
+        cont.nextChunk = nextChunks[(int)cont.nextBlock];                           \
         returnToC = FALSE;                                              \
         do {                                                            \
-                cont=(*(struct cont(*)(void))cont.nextChunk)(nextFun);         \
+                cont=(*(struct cont(*)(uintptr_t))cont.nextChunk)(cont.nextBlock);         \
         } while (not returnToC);                                        \
         GC_done(&gcState);                                              \
 }
