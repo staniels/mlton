@@ -31,6 +31,7 @@ structure Profile = Profile (S)
 structure Redundant = Redundant (S)
 structure RedundantTests = RedundantTests (S)
 structure RemoveUnused = RemoveUnused (S)
+structure ImproveTwo = ImproveTwo (S)
 structure SimplifyTypes = SimplifyTypes (S)
 structure Useless = Useless (S)
 
@@ -86,6 +87,8 @@ val ssaPassesDefault =
    {name = "redundant", doit = Redundant.redundant} ::
    {name = "knownCase", doit = KnownCase.simplify} ::
    {name = "removeUnused4", doit = RemoveUnused.remove} ::
+   {name = "improveTwo", doit = ImproveTwo.improve} ::
+   {name = "removeUnused5", doit = RemoveUnused.remove} ::
    nil
 
 val ssaPassesMinimal =
@@ -203,6 +206,7 @@ local
                  ("redundant", Redundant.redundant),
                  ("redundantTests", RedundantTests.simplify),
                  ("removeUnused", RemoveUnused.remove),
+                 ("improveTwo", ImproveTwo.improve),
                  ("simplifyTypes", SimplifyTypes.simplify),
                  ("useless", Useless.useless),
                  ("breakCriticalEdges",fn p => 

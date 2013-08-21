@@ -43,6 +43,8 @@ local
    two-point-lattice.fun
    three-point-lattice.sig
    ann "forceUsed" in three-point-lattice.fun end
+   interval-lattice.sig
+   ann "forceUsed" in interval-lattice.fun end
 
    common-arg.sig
    common-arg.fun
@@ -96,6 +98,8 @@ local
    remove-unused2.sig
    remove-unused.fun
    remove-unused2.fun
+   improve-two.sig
+   improve-two.fun
    simplify-types.sig
    simplify-types.fun
    useless.sig

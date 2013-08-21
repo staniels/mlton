@@ -56,6 +56,8 @@ two-point-lattice.sig
 two-point-lattice.fun
 three-point-lattice.sig
 three-point-lattice.fun
+interval-lattice.sig
+interval-lattice.fun
 
 common-arg.sig
 common-arg.fun
@@ -109,6 +111,8 @@ remove-unused.sig
 remove-unused2.sig
 remove-unused.fun
 remove-unused2.fun
+improve-two.sig
+improve-two.fun
 simplify-types.sig
 simplify-types.fun
 useless.sig
